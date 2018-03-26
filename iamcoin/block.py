@@ -1,6 +1,6 @@
 import hashlib
 import time
-
+import blockchain
 
 class Block(object):
     """
@@ -44,7 +44,7 @@ def get_next_block(data):
     :param data: data that would go into block
     :return:
     """
-    latest_block = blockchain[-1]
+    latest_block = blockchain.blockchain[-1]
     next_index = latest_block.index + 1
     next_timestamp = int(time.time())
     next_hash = calculate_block_hash(next_index, latest_block.hash, next_timestamp, data)
