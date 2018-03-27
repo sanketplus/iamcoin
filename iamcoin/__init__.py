@@ -1,4 +1,4 @@
-import block
-import blockchain
+from block import *
+from blockchain import *
 
-blockchain.blockchain.append( block.get_genesis_block() )
+blockchain.append( block.get_genesis_block() )

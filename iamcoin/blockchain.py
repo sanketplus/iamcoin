@@ -23,6 +23,11 @@ def is_valid_chain(chain):
 
 
 def replace_chain(new_chain):
+    """
+    if newly received chain is valid and longer than current one then replace current one
+    :param new_chain:
+    :return:
+    """
     global blockchain
     if is_valid_chain(new_chain) and len(new_chain) > len(get_blockchain()):
         blockchain = new_chain

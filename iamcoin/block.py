@@ -45,7 +45,7 @@ def get_genesis_block():
     return Block(0,'cf27a50a6d231c5482bb358a8be3c71d935c5a4826b55ebb5141cda7ea3afe38', None, 1522085107, "I AM COIN :D")
 
 
-def get_next_block(data):
+def generate_next_block(data):
     """
     Gets prev block info from last blockchain block and generates a new block
 
@@ -78,10 +78,18 @@ def is_valid_block(block, pre_block):
 
 
 def get_lastest_block():
+    """
+    :return: last block in blockchain
+    """
     return  blockchain.blockchain[-1]
 
 
-def add_block(block):
+def add_block_to_blockchain(block):
+    """
+    Checks if block is valid and appends it to chain
+    :param block:
+    :return:
+    """
     if is_valid_block(block, get_lastest_block()):
         blockchain.blockchain.append(block)
     else:
