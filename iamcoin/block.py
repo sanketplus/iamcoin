@@ -1,7 +1,9 @@
 import hashlib
 import time
 import blockchain
+import logging
 
+log = logging.getLogger(__name__)
 
 class Block(object):
     """
@@ -34,6 +36,7 @@ def calculate_hash(index,prev_hash,timestamp,data):
 
 
 def calculate_block_hash(block):
+    log.info("Calculating block hash")
     return calculate_hash(block.index, block.prev_hash, block.timestamp, block.data)
 
 
@@ -42,6 +45,7 @@ def get_genesis_block():
     hash of block is calculated 'by-hand', prev_hash is an empty string ''
     :return: Block object
     """
+    log.info("Generating and returning genesis block.")
     return Block(0,'cf27a50a6d231c5482bb358a8be3c71d935c5a4826b55ebb5141cda7ea3afe38', None, 1522085107, "I AM COIN :D")
 
 
@@ -52,6 +56,7 @@ def generate_next_block(data):
     :param data: data that would go into block
     :return:
     """
+    log.info("Generating next/new block")
     latest_block = blockchain.blockchain[-1]
     next_index = latest_block.index + 1
     next_timestamp = int(time.time())
@@ -67,6 +72,7 @@ def is_valid_block(block, pre_block):
     :param pre_block: previous block
     :return:
     """
+    log.info("Checking if block is valid")
     if block.index != pre_block.index + 1:
         return False
     elif pre_block.hash != block.prev_hash:
@@ -74,6 +80,7 @@ def is_valid_block(block, pre_block):
     elif calculate_block_hash(block) != block.hash:
         return False
     else:
+        log.info("Block is valid")
         return True
 
 
@@ -81,6 +88,7 @@ def get_lastest_block():
     """
     :return: last block in blockchain
     """
+    log.info("Returning latest block")
     return  blockchain.blockchain[-1]
 
 
@@ -90,7 +98,10 @@ def add_block_to_blockchain(block):
     :param block:
     :return:
     """
+    log.info("Adding block to blockchain")
     if is_valid_block(block, get_lastest_block()):
         blockchain.blockchain.append(block)
+        log.info("Block was valid and added to chain")
     else:
+        log.info("Block was not added to chain")
         pass
