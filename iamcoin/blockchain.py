@@ -1,4 +1,4 @@
-import block
+
 import logging
 
 log = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def is_valid_chain(chain):
         return False
 
     for i in range(1,len(chain)):
-        if not block.is_valid_block(chain[i],chain[i-1]):
+        if not is_valid_block(chain[i],chain[i-1]):
             log.info("It was not valid")
             return False
 

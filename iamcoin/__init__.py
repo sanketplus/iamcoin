@@ -1,7 +1,7 @@
 import logging
 
-from block import *
-from blockchain import *
+from .block import *
+from .blockchain import *
 
 logging.basicConfig(format='[%(asctime)s] [%(threadName)s:%(name)s] [%(levelname)s] : %(message)s',filename='/var/log/iamcoin.log',
                     level=logging.INFO)
