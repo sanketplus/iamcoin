@@ -2,7 +2,7 @@ import iamcoin
 import logging
 
 from aiohttp import web,ClientSession
-from .p2p import peers, handle_peer_msg
+from .p2p import peers, handle_peer_msg, broadcast
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +12,14 @@ async def api_get_block_count(request):
     return web.Response(text=str({'count': len(iamcoin.blockchain)}),content_type='application/json')
 
 
+async def api_get_peers(request):
+    resp=[]
+    for p in peers.keys():
+        resp.append(p)
+
+    return web.json_response({"peers":resp})
+
+
 async def api_add_block(request):
 
     data = await request.post()
@@ -19,6 +27,7 @@ async def api_add_block(request):
     if request.method == "POST":
         block = iamcoin.generate_next_block(data.get('data'))
         iamcoin.add_block_to_blockchain(block)
+        await broadcast("New block added")
     return web.json_response({"response": "success!"})
 
 
@@ -28,21 +37,24 @@ async def api_add_peer(request):
 
     if request.method == "POST":
         peer_addr = data.get('peer')
+        log.info("Adding peer: {}".format(peer_addr))
         session = ClientSession()
-        async with session.ws_connect(peer_addr) as ws:
-            peers.append(ws)
-            await ws.send_str("Hello mofo")
-            await handle_peer_msg(ws)
-    return web.json_response({"response": "success!"})
-
+        ws = await session.ws_connect(peer_addr)
+        log.info("{}".format(ws.get_extra_info('peername')))
+        key = ws.get_extra_info('peername')[0]
+        peers[key]=ws
+        log.info("Added peer.")
+        await handle_peer_msg(ws)
+        return web.json_response({"response": "success!"})
 
 async def wshandle(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
     log.info("Incoming WS connection...")
-    peers.append(ws)
+    key = request.transport.get_extra_info('peername')[0]
+    peers[key]=ws
     await handle_peer_msg(ws)
-
+    log.info("Incoming is in...")
     return ws
 
 
@@ -50,4 +62,5 @@ app = web.Application(logger=log)
 app.add_routes([web.get('/blockcount', api_get_block_count),
                 web.post("/addblock", api_add_block),
                 web.post("/addpeer", api_add_peer),
+                web.get("/peers", api_get_peers),
                 web.get('/ws', wshandle)])
