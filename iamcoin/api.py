@@ -53,10 +53,10 @@ async def add_peer(peer_addr):
             await handle_peer_msg(key,ws)
     # except Exception:
     #     session.close()
-    log.info("Closing and Removing peer: %s".format(peer_addr))
+    log.info("Closing and Removing peer: {}".format(peer_addr))
     await peers[key].close()
     del peers[key]
-
+    log.info("Removed peer {}".format(peer_addr))
 async def wshandle(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
