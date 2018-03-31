@@ -6,8 +6,7 @@ from aiohttp import web
 log = logging.getLogger(__name__)
 peers = {}
 
-async def handle_peer_msg(ws):
-
+async def handle_peer_msg(key, ws):
     async for msg in ws:
         if msg.type == web.WSMsgType.text:
             log.info("Got message: {}".format(msg.data))
@@ -16,8 +15,8 @@ async def handle_peer_msg(ws):
             await ws.send_bytes(msg.data)
         elif msg.type in [web.WSMsgType.close, web.WSMsgType.error]:
             log.info("WS close or err: closing connection")
-            peers.remove(ws)
-            ws.close()
+            peers[key].close()
+            del peers[key]
 
 
 async def broadcast(msg):

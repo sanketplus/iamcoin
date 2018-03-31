@@ -23,7 +23,8 @@ def start_api_server():
         loop.run_forever()
         #web.run_app(app, port=5000)
     except ServiceExit:
-        loop.close()
+
+        loop.stop()
         logging.info("Stopping API thread")
 
 

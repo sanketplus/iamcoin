@@ -44,14 +44,18 @@ async def api_add_peer(request):
 
 
 async def add_peer(peer_addr):
-    session = ClientSession()
-    async with session.ws_connect(peer_addr) as ws:
-        log.info("{}".format(ws.get_extra_info('peername')))
-        key = ws.get_extra_info('peername')[0]
-        peers[key] = ws
-        log.info("Added peer.")
-        await handle_peer_msg(ws)
-
+    async  with ClientSession() as session:
+        async with session.ws_connect(peer_addr) as ws:
+            log.info("{}".format(ws.get_extra_info('peername')))
+            key = ws.get_extra_info('peername')[0]
+            peers[key] = ws
+            log.info("Added peer.")
+            await handle_peer_msg(key,ws)
+    # except Exception:
+    #     session.close()
+    log.info("Closing and Removing peer: %s".format(peer_addr))
+    await peers[key].close()
+    del peers[key]
 
 async def wshandle(request):
     ws = web.WebSocketResponse()
