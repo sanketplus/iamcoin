@@ -1,5 +1,6 @@
 import iamcoin
 import logging
+import asyncio
 
 from aiohttp import web,ClientSession
 from .p2p import peers, handle_peer_msg, broadcast
@@ -38,14 +39,19 @@ async def api_add_peer(request):
     if request.method == "POST":
         peer_addr = data.get('peer')
         log.info("Adding peer: {}".format(peer_addr))
-        session = ClientSession()
-        ws = await session.ws_connect(peer_addr)
+        loop.create_task(add_peer(peer_addr))
+        return web.json_response({"response": "success!"})
+
+
+async def add_peer(peer_addr):
+    session = ClientSession()
+    async with session.ws_connect(peer_addr) as ws:
         log.info("{}".format(ws.get_extra_info('peername')))
         key = ws.get_extra_info('peername')[0]
-        peers[key]=ws
+        peers[key] = ws
         log.info("Added peer.")
         await handle_peer_msg(ws)
-        return web.json_response({"response": "success!"})
+
 
 async def wshandle(request):
     ws = web.WebSocketResponse()
@@ -64,3 +70,8 @@ app.add_routes([web.get('/blockcount', api_get_block_count),
                 web.post("/addpeer", api_add_peer),
                 web.get("/peers", api_get_peers),
                 web.get('/ws', wshandle)])
+
+loop = asyncio.get_event_loop()
+handler = app.make_handler()
+server = loop.create_server(handler, "0.0.0.0", 5000)
+loop.run_until_complete(server)

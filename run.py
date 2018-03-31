@@ -6,9 +6,10 @@ import time
 
 from aiohttp import web
 from multiprocessing import Process
-from iamcoin.api import app
+from iamcoin.api import loop
 
 threads = []
+
 
 class ServiceExit(Exception):
     pass
@@ -19,10 +20,6 @@ def service_shutdown(signum, frame):
 
 def start_api_server():
     try:
-        handler = app.make_handler()
-        loop = asyncio.get_event_loop()
-        server = loop.create_server(handler, "0.0.0.0", 5000)
-        loop.run_until_complete(server)
         loop.run_forever()
         #web.run_app(app, port=5000)
     except ServiceExit:
