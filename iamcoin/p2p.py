@@ -2,7 +2,7 @@ import logging
 import json
 
 
-from .block import get_lastest_block, generate_block_from_json, add_block_to_blockchain
+from .block import get_lastest_block, generate_block_from_json, add_block_to_blockchain, is_valid_block
 from .blockchain import blockchain, replace_chain
 from aiohttp import web
 

@@ -1,5 +1,7 @@
 import logging
 
+from . import block
+
 log = logging.getLogger(__name__)
 
 blockchain = [ ]
@@ -21,7 +23,7 @@ def is_valid_chain(chain):
         return False
 
     for i in range(1,len(chain)):
-        if not is_valid_block(chain[i],chain[i-1]):
+        if not block.is_valid_block(chain[i],chain[i-1]):
             log.info("It was not valid")
             return False
 

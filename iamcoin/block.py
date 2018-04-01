@@ -1,8 +1,7 @@
 import hashlib
 import time
-from .blockchain import blockchain
+from . import blockchain
 import logging
-import json
 
 
 log = logging.getLogger(__name__)
@@ -88,7 +87,7 @@ def generate_next_block(data):
     :return:
     """
     log.info("Generating next/new block")
-    latest_block = blockchain[-1]
+    latest_block = blockchain.blockchain[-1]
     next_index = latest_block.index + 1
     next_timestamp = int(time.time())
     next_hash = calculate_hash(next_index, latest_block.hash, next_timestamp, data)
@@ -120,7 +119,7 @@ def get_lastest_block():
     :return: last block in blockchain
     """
     log.info("Returning latest block")
-    return  blockchain[-1]
+    return  blockchain.blockchain[-1]
 
 
 def add_block_to_blockchain(block):
@@ -131,7 +130,7 @@ def add_block_to_blockchain(block):
     """
     log.info("Adding block to blockchain")
     if is_valid_block(block, get_lastest_block()):
-        blockchain.append(block)
+        blockchain.blockchain.append(block)
         log.info("Block was valid and added to chain")
     else:
         log.info("Block was not added to chain")
