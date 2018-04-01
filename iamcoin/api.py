@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 async def api_get_block_count(request):
     log.info("Get block count API request.")
-    return web.Response(text=str({'count': len(iamcoin.blockchain)}),content_type='application/json')
+    return web.Response(text=str({'count': len(iamcoin.blockchain.blockchain)}),content_type='application/json')
 
 
 async def api_get_peers(request):
@@ -26,8 +26,8 @@ async def api_add_block(request):
     data = await request.post()
 
     if request.method == "POST":
-        block = iamcoin.generate_next_block(data.get('data'))
-        iamcoin.add_block_to_blockchain(block)
+        block = iamcoin.block.generate_next_block(data.get('data'))
+        iamcoin.block.add_block_to_blockchain(block)
         await broadcast_latest()
     return web.json_response({"response": "success!"})
 
