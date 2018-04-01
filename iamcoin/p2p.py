@@ -91,7 +91,7 @@ async def handle_blockchain_resp(new_chain):
 async def handle_peer_msg(key, ws):
     async for recv_msg in ws:
         if recv_msg.type == web.WSMsgType.text:
-            log.info("Got message: {}".format(msg.data))
+            log.info("Got message: {}".format(recv_msg.data))
             recv_msg = get_msg_from_json(recv_msg.data)
 
             # responding according to message types
