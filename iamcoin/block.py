@@ -38,13 +38,13 @@ class Block(object):
 
 
 
-def generate_block_from_json(json_str):
+def generate_block_from_json(blk_json):
     """
 
     :param json_str: json str dump of Block
     :return: Block object
     """
-    blk_json = json.loads(json_str)
+
     return Block(blk_json['index'],
                  blk_json['hash'],
                  blk_json['prev_hash'],

@@ -2,7 +2,8 @@ import logging
 import json
 
 
-from .block import get_lastest_block
+from .block import get_lastest_block, generate_block_from_json, add_block_to_blockchain
+from .blockchain import blockchain, replace_chain
 from aiohttp import web
 
 log = logging.getLogger(__name__)
@@ -26,6 +27,12 @@ class msg(object):
             "data": self.data
         })
 
+# msg object to query all block
+query_all_msg = msg(msg_type.QUERY_ALL, data=None)
+
+# msg object to query latest block
+query_latest_msg = msg(msg_type.QUERY_LATEST, data=None)
+
 
 def get_msg_from_json(json_str):
     msg_json = json.loads(json_str)
@@ -33,18 +40,73 @@ def get_msg_from_json(json_str):
 
 
 def resp_latest_message():
+    """
+
+    :return: msg object with lastest block-json as data
+    """
     log.info("Generating latest block response json")
     return msg(msg_type.RESPONSE_BLOCKCHAIN,
-               get_lastest_block().to_json()
+               [ get_lastest_block().to_json() ]
                ).to_json()
+
+
+def resp_chain_message():
+    """
+
+    :return: msg object with list if json-blocks as data
+    """
+    log.info("Generating blockchain response json")
+    return msg(msg_type.RESPONSE_BLOCKCHAIN,
+               [b.to_json() for b in blockchain]
+               ).to_json()
+
+
+
+async def handle_blockchain_resp(new_chain):
+    if len(new_chain) == 0:
+        log.info("New received chain len is 0")
+        return
+
+    our_last_blk = get_lastest_block()
+    got_last_blk = new_chain[-1]
+
+    # if more blocks in new chain
+    if our_last_blk.index < got_last_blk.index:
+        log.info("Got new chain with len: {}, ours is: {}".format(len(new_chain), len(blockchain)))
+
+        if our_last_blk.hash == got_last_blk.prev_hash:
+            log.info("We were one block behind, adding new block")
+            add_block_to_blockchain(got_last_blk)
+            broadcast_latest()
+        elif len(new_chain) == 1:
+            log.info("Got just one block. gonna query whole chain")
+            await broadcast( query_all_msg )
+        else:
+            log.info("Received longer chain, replacing")
+            replace_chain(new_chain)
+    else:
+        log.info("Shorter blockchain received, do nothing")
+
 
 async def handle_peer_msg(key, ws):
     async for msg in ws:
         if msg.type == web.WSMsgType.text:
             log.info("Got message: {}".format(msg.data))
-            # await ws.send_str("Did you just say, {}".format(msg.data))
+            recv_msg = get_msg_from_json(msg.data)
+
+            # responding according to message types
+            if recv_msg['type'] == msg_type.QUERY_LATEST:
+                await ws.send_str( resp_latest_message() )
+
+            elif recv_msg['type'] == msg_type.QUERY_ALL:
+                await ws.send_str( resp_chain_message() )
+
+            elif recv_msg['type'] == msg_type.RESPONSE_BLOCKCHAIN:
+                new_chain = [ generate_block_from_json(b) for b in recv_msg['data'] ]
+                await handle_blockchain_resp(new_chain)
+
         elif msg.type == web.WSMsgType.binary:
-            await ws.send_bytes(msg.data)
+            log.info("Binary message; ignoring...")
         elif msg.type in [web.WSMsgType.close, web.WSMsgType.error]:
             log.info("WS close or err: closing connection")
             peers[key].close()
