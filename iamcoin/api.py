@@ -57,6 +57,8 @@ async def add_peer(peer_addr):
     await peers[key].close()
     del peers[key]
     log.info("Removed peer {}".format(peer_addr))
+
+
 async def wshandle(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -74,6 +76,7 @@ app.add_routes([web.get('/blockcount', api_get_block_count),
                 web.post("/addpeer", api_add_peer),
                 web.get("/peers", api_get_peers),
                 web.get('/ws', wshandle)])
+
 
 loop = asyncio.get_event_loop()
 handler = app.make_handler()

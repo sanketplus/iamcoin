@@ -2,8 +2,11 @@ import hashlib
 import time
 from .blockchain import blockchain
 import logging
+import json
+
 
 log = logging.getLogger(__name__)
+
 
 class Block(object):
     """
@@ -19,6 +22,34 @@ class Block(object):
 
     def __str__(self):
         return "%s%s%s%s%s" % (self.index, self.hash, self.prev_hash, self.timestamp, self.data)
+
+    def to_json(self):
+        """
+
+        :return: json string of object
+        """
+        return json.dumps({ "index": self.index,
+                            "hash": self.hash,
+                            "prev_hash": self.prev_hash,
+                            "timestamp": self.timestamp,
+                            "data": self.data
+                            })
+
+
+
+def generate_block_from_json(json_str):
+    """
+
+    :param json_str: json str dump of Block
+    :return: Block object
+    """
+    blk_json = json.loads(json_str)
+    return Block(blk_json['index'],
+                 blk_json['hash'],
+                 blk_json['prev_hash'],
+                 blk_json['timestamp'],
+                 blk_json['data']
+                 )
 
 
 def calculate_hash(index,prev_hash,timestamp,data):
