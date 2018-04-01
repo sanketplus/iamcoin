@@ -77,7 +77,7 @@ async def handle_blockchain_resp(new_chain):
         if our_last_blk.hash == got_last_blk.prev_hash:
             log.info("We were one block behind, adding new block")
             add_block_to_blockchain(got_last_blk)
-            broadcast_latest()
+            await broadcast_latest()
         elif len(new_chain) == 1:
             log.info("Got just one block. gonna query whole chain")
             await broadcast( query_all_msg )
