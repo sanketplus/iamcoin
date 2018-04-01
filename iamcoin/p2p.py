@@ -89,10 +89,10 @@ async def handle_blockchain_resp(new_chain):
 
 
 async def handle_peer_msg(key, ws):
-    async for msg in ws:
-        if msg.type == web.WSMsgType.text:
+    async for recv_msg in ws:
+        if recv_msg.type == web.WSMsgType.text:
             log.info("Got message: {}".format(msg.data))
-            recv_msg = get_msg_from_json(msg.data)
+            recv_msg = get_msg_from_json(recv_msg.data)
 
             # responding according to message types
             if recv_msg['type'] == msg_type.QUERY_LATEST:
@@ -105,9 +105,9 @@ async def handle_peer_msg(key, ws):
                 new_chain = [ generate_block_from_json(b) for b in recv_msg['data'] ]
                 await handle_blockchain_resp(new_chain)
 
-        elif msg.type == web.WSMsgType.binary:
+        elif recv_msg.type == web.WSMsgType.binary:
             log.info("Binary message; ignoring...")
-        elif msg.type in [web.WSMsgType.close, web.WSMsgType.error]:
+        elif recv_msg.type in [web.WSMsgType.close, web.WSMsgType.error]:
             log.info("WS close or err: closing connection")
             peers[key].close()
             del peers[key]
