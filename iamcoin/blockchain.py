@@ -1,6 +1,5 @@
 import logging
 
-from .block import is_valid_block
 log = logging.getLogger(__name__)
 
 blockchain = [ ]

@@ -11,9 +11,9 @@ peers = {}
 
 
 class msg_type(object):
-    QUERY_LATEST = 0,
-    QUERY_ALL = 1,
-    RESPONSE_BLOCKCHAIN = 2,
+    QUERY_LATEST = 0
+    QUERY_ALL = 1
+    RESPONSE_BLOCKCHAIN = 2
 
 
 class msg(object):
@@ -28,10 +28,10 @@ class msg(object):
         })
 
 # msg object to query all block
-query_all_msg = msg(msg_type.QUERY_ALL, data=None)
+query_all_msg = msg(msg_type.QUERY_ALL, data=None).to_json()
 
 # msg object to query latest block
-query_latest_msg = msg(msg_type.QUERY_LATEST, data=None)
+query_latest_msg = msg(msg_type.QUERY_LATEST, data=None).to_json()
 
 
 def get_msg_from_json(json_str):
