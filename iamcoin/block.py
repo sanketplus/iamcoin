@@ -28,12 +28,13 @@ class Block(object):
 
         :return: json string of object
         """
-        return json.dumps({ "index": self.index,
-                            "hash": self.hash,
-                            "prev_hash": self.prev_hash,
-                            "timestamp": self.timestamp,
-                            "data": self.data
-                            })
+        return {
+                "index": self.index,
+                "hash": self.hash,
+                "prev_hash": self.prev_hash,
+                "timestamp": self.timestamp,
+                "data": self.data
+                }
 
 
 

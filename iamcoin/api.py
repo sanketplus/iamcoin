@@ -3,7 +3,7 @@ import logging
 import asyncio
 
 from aiohttp import web,ClientSession
-from .p2p import peers, handle_peer_msg, broadcast
+from .p2p import peers, handle_peer_msg, broadcast_latest
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ async def api_add_block(request):
     if request.method == "POST":
         block = iamcoin.generate_next_block(data.get('data'))
         iamcoin.add_block_to_blockchain(block)
-        await broadcast("New block added")
+        await broadcast_latest()
     return web.json_response({"response": "success!"})
 
 
@@ -65,7 +65,7 @@ async def wshandle(request):
     log.info("Incoming WS connection...")
     key = request.transport.get_extra_info('peername')[0]
     peers[key]=ws
-    await handle_peer_msg(ws)
+    await handle_peer_msg(key, ws)
     log.info("Incoming is in...")
     return ws
 
