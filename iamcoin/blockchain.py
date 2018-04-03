@@ -5,6 +5,7 @@ from . import block
 log = logging.getLogger(__name__)
 
 blockchain = [ ]
+utxo = []
 
 
 def get_blockchain():

@@ -1,6 +1,7 @@
 import iamcoin
 import logging
 import asyncio
+import json
 
 from aiohttp import web,ClientSession
 from .p2p import peers, handle_peer_msg, broadcast_latest
@@ -23,10 +24,14 @@ async def api_get_peers(request):
 
 async def api_add_block(request):
 
-    data = await request.post()
-
+    data = await request.json()
+    log.info("mining new block, data: {}".format(data))
     if request.method == "POST":
-        block = iamcoin.block.generate_next_block(data.get('data'))
+        block = iamcoin.block.generate_next_block(data["data"])
+
+        if not block:
+            log.info("Could not generate block")
+            return web.json_response({"response": "failure!"})
         iamcoin.block.add_block_to_blockchain(block)
         await broadcast_latest()
     return web.json_response({"response": "success!"})
@@ -72,7 +77,7 @@ async def wshandle(request):
 
 app = web.Application(logger=log)
 app.add_routes([web.get('/blockcount', api_get_block_count),
-                web.post("/addblock", api_add_block),
+                web.post("/mineblock", api_add_block),
                 web.post("/addpeer", api_add_peer),
                 web.get("/peers", api_get_peers),
                 web.get('/ws', wshandle)])

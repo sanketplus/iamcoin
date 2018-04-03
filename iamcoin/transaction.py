@@ -21,16 +21,36 @@ class TxIn(object):
         self.txout_index = txout_index
         self.signature = signature
 
-    # def to_json(self):
-    #     return {"txout_id": self.txout_id,
-    #             "txout_index": self.txout_index
-    #
-    #             }
+    def __str__(self):
+        return "{}{}{}".format(self.txout_id, self.txout_index, self.signature)
+
+    def to_json(self):
+        return {"txout_id": self.txout_id,
+                "txout_index": self.txout_index,
+                "signature": self.signature
+                }
+
+    @staticmethod
+    def from_json(j):
+        return TxIn(j["txout_id"], j["txout_index"], j["signature"])
+
 
 class TxOut(object):
     def __init__(self, address, amount):
         self.address = address
         self.amount = amount
+
+    def __str__(self):
+        return "{}{}".format(self.address, self.amount)
+
+    def to_json(self):
+        return {"address": self.address,
+                "amount": self.amount
+                }
+
+    @staticmethod
+    def from_json(j):
+        return TxOut(j['address'], j['amount'])
 
 
 class Transaction(object):
@@ -38,6 +58,29 @@ class Transaction(object):
         self.id = id
         self.txins = txins
         self.txouts = txouts
+
+    def __str__(self):
+        tx_str = "{}".format(self.id)
+        for t in self.txins:
+            tx_str += t
+
+        for r in self.txouts:
+            tx_str += t
+
+        return tx_str
+
+    def to_json(self):
+        return {"id": self.id,
+                "txins": [t.to_json() for t in self.txins],
+                "txouts": [t.to_json() for t in self.txouts]
+                }
+
+    @staticmethod
+    def from_json(j):
+        return Transaction(j["id"],
+                           [TxIn.from_json(_) for _ in j["txins"]],
+                           [TxOut.from_json(_) for _ in j["txouts"]]
+                           )
 
 
 def get_transaction_id(tx):
@@ -82,7 +125,7 @@ def validate_transaction(tx, utxos):
 
 def validate_block_transactions(txs, utxos, block_index):
     coinbase_tx = txs[0]
-    if not is_valid_coinbase_tx(coinbase_tx):
+    if not is_valid_coinbase_tx(coinbase_tx, block_index):
         log.info("Invalid coinbase tx")
         return False
 
@@ -110,7 +153,7 @@ def is_valid_coinbase_tx(tx, index):
         return False
 
     if get_transaction_id(tx) != tx.id:
-        log.info("Tx id do not match")
+        log.info("Tx id do not match: {} :: {}".format(get_transaction_id(tx), tx.id))
         return False
 
     if len(tx.txins) != 1:
