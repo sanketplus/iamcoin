@@ -3,6 +3,7 @@ import logging
 from . import block
 from . import blockchain
 from . import p2p
+from . import transaction
 
 logging.basicConfig(format='[%(asctime)s] [%(threadName)s:%(name)s] [%(levelname)s] : %(message)s',
                     filename='/var/log/iamcoin.log', level=logging.INFO)
