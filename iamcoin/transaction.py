@@ -173,7 +173,7 @@ def is_valid_coinbase_tx(tx, index):
 def is_valid_txin(txin, tx, utxos):
     ref_utxo = None
     for t in utxos:
-        if t.txout_id == txin.txout_id:
+        if t.txout_id == txin.txout_id and t.txout_index == txin.txout_index:
             ref_utxo = t
 
     if ref_utxo == None:
