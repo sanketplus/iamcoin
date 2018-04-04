@@ -56,12 +56,12 @@ async def api_mine_transaction(request):
         resp = "success"
     else:
         resp = "failure"
-    web.json_response({"response":resp})
+    return web.json_response({"response":resp})
 
 
 async def api_balance(request):
     balance = wallet.get_account_balance()
-    return web.json_response({"address": wallet.get_pubkey_from_wallet().decode(),
+    return web.json_response({"address": wallet.get_pubkey_from_wallet(),
                               "balance": balance
                               })
 

@@ -45,13 +45,13 @@ class TxOut(object):
         return "{}{}".format(self.address, self.amount)
 
     def to_json(self):
-        return {"address": self.address.decode(),
+        return {"address": self.address,
                 "amount": self.amount
                 }
 
     @staticmethod
     def from_json(j):
-        return TxOut(j['address'], j['amount'])
+        return TxOut(j['address'] , j['amount'])
 
 
 class Transaction(object):
@@ -105,7 +105,7 @@ def validate_transaction(tx, utxos):
         return False
 
     for t in tx.txins:
-        if not is_valid_txin(t):
+        if not is_valid_txin(t, tx, utxos):
             log.info("Not a valid In Tx")
             return False
 
@@ -139,7 +139,7 @@ def validate_block_transactions(txs, utxos, block_index):
         return False
 
     for t in txs[1:]:
-        if not validate_transaction(t):
+        if not validate_transaction(t, utxos):
             log.info("Invalid tx detected")
             return False
 
@@ -184,7 +184,7 @@ def is_valid_txin(txin, tx, utxos):
     address = ref_utxo.address
 
     key = ecdsa.VerifyingKey.from_string(binascii.unhexlify(address))
-    ok = key.verify(txin.signature, tx.id)
+    ok = key.verify(binascii.unhexlify(txin.signature), bytes(tx.id, encoding="utf-8"))
     if not ok:
         log.error("Could not verify signature for txin")
     return ok
@@ -213,7 +213,7 @@ def sign_tx(tx, txin_index, pk, utxos):
     log.info("Signing tx")
     txin = tx.txins[txin_index]
     data = tx.id
-    ref_utxo = find_utxo(txin.id, txin.txout_index, utxos)
+    ref_utxo = find_utxo(txin.txout_id, txin.txout_index, utxos)
 
     if not ref_utxo:
         log.info("Could not find ref utxo")
@@ -225,8 +225,8 @@ def sign_tx(tx, txin_index, pk, utxos):
         log.info("Trying to sign tx with pk that does not match with pubkey of txin")
         raise
 
-    key = ecdsa.VerifyingKey.from_pem(pk)
-    signature = key.sign(data).hex()
+    key = ecdsa.SigningKey.from_pem(pk)
+    signature = key.sign(bytes(data, encoding="utf-8")).hex()
 
     return signature
 
@@ -263,7 +263,6 @@ def get_public_key(pk):
     :return:
     """
 
-    pub_key = ecdsa.SigningKey.from_pem(pk).get_verifying_key().to_string()
-    return binascii.hexlify(pub_key)
-
+    pub_key = ecdsa.SigningKey.from_pem(pk).get_verifying_key().to_string().hex()
+    return pub_key
 

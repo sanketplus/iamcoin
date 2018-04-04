@@ -51,7 +51,7 @@ def generate_block_from_json(blk_json):
                  blk_json['hash'],
                  blk_json['prev_hash'],
                  blk_json['timestamp'],
-                 transaction.Transaction.from_json(blk_json["data"])
+                 [transaction.Transaction.from_json(t) for t in blk_json["data"]]
                  )
 
 
@@ -125,7 +125,7 @@ async def generate_next_block_with_tx(recv_addr, amount):
     :return:
     """
     coinbase_tx = transaction.get_coinbse_tx(wallet.get_pubkey_from_wallet(), get_latest_block().index+1)
-    tx = wallet.create_transaction(recv_addr, amount, wallet.get_pubkey_from_wallet(), blockchain.utxo)
+    tx = wallet.create_transaction(recv_addr, amount, wallet.get_pk_from_wallet(), blockchain.utxo)
     data = [coinbase_tx, tx]
     return await generate_raw_next_block(data)
 

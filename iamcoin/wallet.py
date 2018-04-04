@@ -27,9 +27,9 @@ def get_pubkey_from_wallet():
     :return:
     """
     kp = ecdsa.SigningKey.from_pem(get_pk_from_wallet())
-    pub_key = kp.get_verifying_key().to_string()
+    pub_key = kp.get_verifying_key().to_string().hex()
 
-    return binascii.hexlify(pub_key)
+    return pub_key
 
 
 def generate_pk():
@@ -137,9 +137,8 @@ def create_transaction(recv_addr, amount, pk, utxos):
     """
 
     my_addr = transaction.get_public_key(pk)
-    my_addr_hex = binascii.hexlify(my_addr.to_string())
 
-    my_utxos = [t for t in utxos if t.address == my_addr_hex]
+    my_utxos = [t for t in utxos if t.address == my_addr]
 
     included_txout, left_amt = find_txouts_for_amt(amount, my_utxos)
 
@@ -155,6 +154,13 @@ def create_transaction(recv_addr, amount, pk, utxos):
     tx.id = transaction.get_transaction_id(tx)
 
     #signing tx's txins
-    tx.txins = [transaction.sign_tx(t, index, pk, utxos) for t in enumerate(tx.txins)]
+    # tx.txins = [transaction.sign_tx(tx, index, pk, utxos) for index, t in enumerate(tx.txins)]
+    singned_txins = []
+    for index, t in enumerate(tx.txins):
+        sign = transaction.sign_tx(tx, index, pk, utxos)
+        t.signature = sign
+        singned_txins.append(t)
+
+    tx.txins = singned_txins
 
     return tx
