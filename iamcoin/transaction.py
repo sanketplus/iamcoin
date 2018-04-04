@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import ecdsa
+import binascii
 
 
 log = logging.getLogger(__name__)
@@ -182,7 +183,7 @@ def is_valid_txin(txin, tx, utxos):
 
     address = ref_utxo.address
 
-    key = ecdsa.VerifyingKey.from_string(address, ecdsa.SECP256k1)
+    key = ecdsa.VerifyingKey.from_string(binascii.unhexlify(address))
     return key.verify(txin.signature, tx.id)
 
 
@@ -222,7 +223,7 @@ def sign_tx(tx, txin_index, pk, utxos):
         log.info("Trying to sign tx with pk that does not match with pubkey of txin")
         raise
 
-    key = ecdsa.VerifyingKey.from_string(pk, curve=ecdsa.SECP256k1)
+    key = ecdsa.VerifyingKey.from_pem(pk)
     signature = key.sign(data).hex()
 
     return signature
@@ -254,6 +255,13 @@ def process_transactions(txs, utxos, block_index):
 
 
 def get_public_key(pk):
-    return ecdsa.SigningKey.from_string(pk, curve=ecdsa.SECP256k1).get_verifying_key()
+    """
+
+    :param pk: PEM formatted private key
+    :return:
+    """
+
+    pub_key = ecdsa.SigningKey.from_pem(pk).get_verifying_key().to_string()
+    return binascii.hexlify(pub_key)
 
 
