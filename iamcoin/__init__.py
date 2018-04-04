@@ -16,3 +16,7 @@ log.info("Let's roll the coin, shall we?")
 log.info("Initializing genesis block")
 blockchain.blockchain.append(block.get_genesis_block())
 log.info("Initialized blockchain with genesis block")
+
+log.info("Initializing wallet")
+wallet.init_wallet()
+log.info("Wallet initialized")

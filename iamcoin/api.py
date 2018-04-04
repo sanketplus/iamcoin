@@ -3,8 +3,12 @@ import logging
 import asyncio
 import json
 
+
 from aiohttp import web,ClientSession
 from .p2p import peers, handle_peer_msg, broadcast_latest
+from . import wallet
+from . import transaction
+from . import block
 
 log = logging.getLogger(__name__)
 
@@ -22,12 +26,13 @@ async def api_get_peers(request):
     return web.json_response({"peers":resp})
 
 
-async def api_add_block(request):
+async def api_add_raw_block(request):
 
     data = await request.json()
     log.info("mining new block, data: {}".format(data))
+    data = [transaction.Transaction.from_json(_) for _ in data["data"]]
     if request.method == "POST":
-        block = iamcoin.block.generate_next_block(data["data"])
+        block = await iamcoin.block.generate_raw_next_block(data)
 
         if not block:
             log.info("Could not generate block")
@@ -35,6 +40,30 @@ async def api_add_block(request):
         iamcoin.block.add_block_to_blockchain(block)
         await broadcast_latest()
     return web.json_response({"response": "success!"})
+
+
+async def api_add_block(request):
+    if await block.generate_next_block():
+        resp="success"
+    else:
+        resp="failure"
+    return web.json_response({"response":resp})
+
+
+async def api_mine_transaction(request):
+    data = await request.json()
+    if await block.generate_next_block_with_tx(data["address"], data["amount"]):
+        resp = "success"
+    else:
+        resp = "failure"
+    web.json_response({"response":resp})
+
+
+async def api_balance(request):
+    balance = wallet.get_account_balance()
+    return web.json_response({"address": wallet.get_pubkey_from_wallet().decode(),
+                              "balance": balance
+                              })
 
 
 async def api_add_peer(request):
@@ -77,7 +106,10 @@ async def wshandle(request):
 
 app = web.Application(logger=log)
 app.add_routes([web.get('/blockcount', api_get_block_count),
+                web.post("/minerawblock", api_add_raw_block),
                 web.post("/mineblock", api_add_block),
+                web.post("/minetransaction", api_mine_transaction),
+                web.get("/balance", api_balance),
                 web.post("/addpeer", api_add_peer),
                 web.get("/peers", api_get_peers),
                 web.get('/ws', wshandle)])

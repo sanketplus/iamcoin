@@ -2,6 +2,9 @@ import hashlib
 import time
 from . import blockchain
 from . import transaction
+from . import wallet
+from . import p2p
+
 import logging
 import json
 
@@ -80,7 +83,7 @@ def get_genesis_block():
     return Block(0,'cf27a50a6d231c5482bb358a8be3c71d935c5a4826b55ebb5141cda7ea3afe38', None, 1522085107, [])
 
 
-def generate_next_block(data):
+async def generate_raw_next_block(data):
     """
     Gets prev block info from last blockchain block and generates a new block
 
@@ -91,10 +94,40 @@ def generate_next_block(data):
     latest_block = blockchain.blockchain[-1]
     next_index = latest_block.index + 1
     next_timestamp = int(time.time())
-    txs = [transaction.Transaction.from_json(_) for _ in data]
+    # txs = [transaction.Transaction.from_json(_) for _ in data]
+    txs = data
     next_hash = calculate_hash(next_index, latest_block.hash, next_timestamp, txs)
 
-    return Block(next_index, next_hash, latest_block.hash, next_timestamp, txs)
+    new_blk = Block(next_index, next_hash, latest_block.hash, next_timestamp, txs)
+
+    if add_block_to_blockchain(new_blk):
+        await p2p.broadcast_latest()
+        return new_blk
+    else:
+        return None
+
+
+async def generate_next_block():
+    """
+    generates next block with coinbase transacttion
+    :return:
+    """
+    coinbase_tx = transaction.get_coinbse_tx(wallet.get_pubkey_from_wallet(), get_latest_block().index+1)
+    data = [coinbase_tx]
+    return await generate_raw_next_block(data)
+
+
+async def generate_next_block_with_tx(recv_addr, amount):
+    """
+    Generates block with coinbase and given tx
+    :param recv_addr:
+    :param amount:
+    :return:
+    """
+    coinbase_tx = transaction.get_coinbse_tx(wallet.get_pubkey_from_wallet(), get_latest_block().index+1)
+    tx = wallet.create_transaction(recv_addr, amount, wallet.get_pubkey_from_wallet(), blockchain.utxo)
+    data = [coinbase_tx, tx]
+    return await generate_raw_next_block(data)
 
 
 def is_valid_block(block, pre_block):
@@ -116,7 +149,7 @@ def is_valid_block(block, pre_block):
         return True
 
 
-def get_lastest_block():
+def get_latest_block():
     """
     :return: last block in blockchain
     """
@@ -131,12 +164,13 @@ def add_block_to_blockchain(block):
     :return:
     """
     log.info("Adding block to blockchain")
-    if is_valid_block(block, get_lastest_block()):
+    if is_valid_block(block, get_latest_block()):
         new_utxo = transaction.process_transactions(block.data, blockchain.utxo, block.index)
         if new_utxo:
             blockchain.utxo = new_utxo
             blockchain.blockchain.append(block)
             log.info("Block was valid and added to chain")
+            return True
     else:
         log.info("Block was not added to chain")
-        pass
+        return False

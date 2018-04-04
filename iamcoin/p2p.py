@@ -2,8 +2,10 @@ import logging
 import json
 
 
-from .block import get_lastest_block, generate_block_from_json, add_block_to_blockchain, is_valid_block
-from .blockchain import blockchain, replace_chain
+from . import block
+from . import blockchain
+# from .block import get_latest_block, generate_block_from_json, add_block_to_blockchain, is_valid_block
+# from .blockchain import blockchain, replace_chain
 from aiohttp import web
 
 log = logging.getLogger(__name__)
@@ -46,7 +48,7 @@ def resp_latest_message():
     """
     log.info("Generating latest block response json")
     return msg(msg_type.RESPONSE_BLOCKCHAIN,
-               [ get_lastest_block().to_json() ]
+               [ block.get_latest_block().to_json() ]
                ).to_json()
 
 
@@ -57,7 +59,7 @@ def resp_chain_message():
     """
     log.info("Generating blockchain response json")
     return msg(msg_type.RESPONSE_BLOCKCHAIN,
-               [b.to_json() for b in blockchain]
+               [b.to_json() for b in blockchain.blockchain]
                ).to_json()
 
 
@@ -67,23 +69,23 @@ async def handle_blockchain_resp(new_chain):
         log.info("New received chain len is 0")
         return
 
-    our_last_blk = get_lastest_block()
+    our_last_blk = block.get_latest_block()
     got_last_blk = new_chain[-1]
 
     # if more blocks in new chain
     if our_last_blk.index < got_last_blk.index:
-        log.info("Got new chain with len: {}, ours is: {}".format(len(new_chain), len(blockchain)))
+        log.info("Got new chain with len: {}, ours is: {}".format(len(new_chain), len(blockchain.blockchain)))
 
         if our_last_blk.hash == got_last_blk.prev_hash:
             log.info("We were one block behind, adding new block")
-            add_block_to_blockchain(got_last_blk)
+            block.add_block_to_blockchain(got_last_blk)
             await broadcast_latest()
         elif len(new_chain) == 1:
             log.info("Got just one block. gonna query whole chain")
             await broadcast( query_all_msg )
         else:
             log.info("Received longer chain, replacing")
-            replace_chain(new_chain)
+            blockchain.replace_chain(new_chain)
     else:
         log.info("Shorter blockchain received, do nothing")
 
@@ -103,7 +105,7 @@ async def handle_peer_msg(key, ws):
                 await ws.send_str( resp_chain_message() )
 
             elif recv_msg.type == msg_type.RESPONSE_BLOCKCHAIN:
-                new_chain = [ generate_block_from_json(b) for b in recv_msg.data ]
+                new_chain = [ block.generate_block_from_json(b) for b in recv_msg.data ]
                 await handle_blockchain_resp(new_chain)
 
         elif ws_msg.type == web.WSMsgType.binary:

@@ -45,7 +45,7 @@ class TxOut(object):
         return "{}{}".format(self.address, self.amount)
 
     def to_json(self):
-        return {"address": self.address,
+        return {"address": self.address.decode(),
                 "amount": self.amount
                 }
 
@@ -184,7 +184,10 @@ def is_valid_txin(txin, tx, utxos):
     address = ref_utxo.address
 
     key = ecdsa.VerifyingKey.from_string(binascii.unhexlify(address))
-    return key.verify(txin.signature, tx.id)
+    ok = key.verify(txin.signature, tx.id)
+    if not ok:
+        log.error("Could not verify signature for txin")
+    return ok
 
 
 def get_txin_amt(txin, utxos):
@@ -202,7 +205,6 @@ def get_coinbse_tx(address, index):
     txout = TxOut(address,COINBASE_AMT)
     t= Transaction("", [txin], [txout])
     t.id = get_transaction_id(t)
-    t = Transaction()
 
     return t
 

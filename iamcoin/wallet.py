@@ -4,9 +4,10 @@ import os
 import logging
 
 from . import transaction
+from . import blockchain
 
 
-PK_LOCATION = "~/iamcoin/private_key"
+PK_LOCATION = os.path.expanduser("~/iamcoin/private_key")
 log = logging.getLogger(__name__)
 
 
@@ -16,7 +17,7 @@ def get_pk_from_wallet():
     :return:
     """
     with open(PK_LOCATION) as f:
-        return f.read()
+        return bytes(''.join(f.readlines()), encoding="utf-8")
 
 
 def get_pubkey_from_wallet():
@@ -52,8 +53,13 @@ def init_wallet():
         return
 
     new_pk = generate_pk()
+
+    key_dir = "/".join(os.path.expanduser(PK_LOCATION).split("/")[:-1])
+    if not os.path.isdir(key_dir):
+        os.mkdir(key_dir)
+
     with open(PK_LOCATION, "w") as f:
-        f.write(new_pk)
+        f.write(new_pk.decode())
     log.info("Initialized new wallet with a private key")
 
 
@@ -70,6 +76,10 @@ def get_balance(address, utxos):
         if t.address == address:
             amt += t.amount
     return amt
+
+
+def get_account_balance():
+    return get_balance(get_pubkey_from_wallet(), blockchain.utxo)
 
 
 def find_txouts_for_amt(amount, my_utxos):
