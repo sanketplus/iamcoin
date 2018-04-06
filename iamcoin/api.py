@@ -1,7 +1,7 @@
 import iamcoin
 import logging
 import asyncio
-import json
+import sys
 
 
 from aiohttp import web,ClientSession
@@ -117,5 +117,5 @@ app.add_routes([web.get('/blockcount', api_get_block_count),
 
 loop = asyncio.get_event_loop()
 handler = app.make_handler()
-server = loop.create_server(handler, "0.0.0.0", 5000)
+server = loop.create_server(handler, "0.0.0.0", iamcoin.PORT)
 loop.run_until_complete(server)

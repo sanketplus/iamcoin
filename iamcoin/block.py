@@ -24,7 +24,7 @@ class Block(object):
         self.data = data
 
     def __str__(self):
-        return "%s%s%s%s%s" % (self.index, self.hash, self.prev_hash, self.timestamp, self.data)
+        return "{}{}{}{}{}".format(self.index, self.hash, self.prev_hash, self.timestamp, self.data)
 
     def to_json(self):
         """
@@ -65,13 +65,14 @@ def calculate_hash(index,prev_hash,timestamp,data):
     :param data: str
     :return: hexdigest in form of string
     """
-    str = "%s%s%s%s" % (index, prev_hash, timestamp, data)
-    return hashlib.sha256(bytes(str, encoding="UTF-8")).hexdigest()
+    strr = "{}{}{}{}".format(index, prev_hash, timestamp, data)
+    return hashlib.sha256(bytes(strr, encoding="UTF-8")).hexdigest()
 
 
 def calculate_block_hash(block):
     log.info("Calculating block hash")
-    return calculate_hash(block.index, block.prev_hash, block.timestamp, block.data)
+    data_str = ''.join(str(t) for t in block.data)
+    return calculate_hash(block.index, block.prev_hash, block.timestamp, data_str)
 
 
 def get_genesis_block():
@@ -80,7 +81,7 @@ def get_genesis_block():
     :return: Block object
     """
     log.info("Generating and returning genesis block.")
-    return Block(0,'cf27a50a6d231c5482bb358a8be3c71d935c5a4826b55ebb5141cda7ea3afe38', None, 1522085107, [])
+    return Block(0,'10d5e47dfcd0a9de38eae602df5389f6b35cf0b17f4bfc06480b019d9fd0e4d4', '', 1522085107, [])
 
 
 async def generate_raw_next_block(data):
@@ -96,9 +97,11 @@ async def generate_raw_next_block(data):
     next_timestamp = int(time.time())
     # txs = [transaction.Transaction.from_json(_) for _ in data]
     txs = data
-    next_hash = calculate_hash(next_index, latest_block.hash, next_timestamp, txs)
+    txs_str = ''.join(str(t) for t in data)
+    next_hash = calculate_hash(next_index, latest_block.hash, next_timestamp, txs_str)
 
     new_blk = Block(next_index, next_hash, latest_block.hash, next_timestamp, txs)
+
 
     if add_block_to_blockchain(new_blk):
         await p2p.broadcast_latest()
@@ -139,10 +142,13 @@ def is_valid_block(block, pre_block):
     """
     log.info("Checking if block is valid")
     if block.index != pre_block.index + 1:
+        log.error("new block index!=1+last_blk_idx")
         return False
     elif pre_block.hash != block.prev_hash:
+        log.error("prev block hash does not match")
         return False
     elif calculate_block_hash(block) != block.hash:
+        log.error("Calculated hash does not match provided hash")
         return False
     else:
         log.info("Block is valid")

@@ -63,10 +63,10 @@ class Transaction(object):
     def __str__(self):
         tx_str = "{}".format(self.id)
         for t in self.txins:
-            tx_str += t
+            tx_str += str(t)
 
         for r in self.txouts:
-            tx_str += t
+            tx_str += str(t)
 
         return tx_str
 

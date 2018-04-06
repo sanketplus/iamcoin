@@ -2,12 +2,13 @@ import ecdsa
 import binascii
 import os
 import logging
+import iamcoin
 
 from . import transaction
 from . import blockchain
 
 
-PK_LOCATION = os.path.expanduser("~/iamcoin/private_key")
+PK_LOCATION = None
 log = logging.getLogger(__name__)
 
 
@@ -49,6 +50,8 @@ def init_wallet():
 
     :return:
     """
+    global PK_LOCATION
+    PK_LOCATION = iamcoin.PK_LOC
     if os.path.isfile(PK_LOCATION):
         return
 
