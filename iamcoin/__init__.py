@@ -14,6 +14,8 @@ PORT = 5000 if len(sys.argv) == 1 else sys.argv[1]
 PK_LOC = os.path.expanduser("~/iamcoin/private_key") if len(sys.argv) == 1  else \
          os.path.expanduser("~/iamcoin/private_replica_key")
 
+MAX_TRANSACT = 10
+MINE_PERIOD = 600
 
 logging.basicConfig(format='[%(asctime)s] [%(threadName)s:%(name)s] [%(levelname)s] : %(message)s',
                     filename=LOG_DIR, level=logging.INFO)

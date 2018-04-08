@@ -1,7 +1,7 @@
 import iamcoin
 import logging
 import asyncio
-import sys
+import time
 
 
 from aiohttp import web,ClientSession
@@ -119,6 +119,19 @@ async def wshandle(request):
     return ws
 
 
+async def miner_cron():
+    while True:
+        log.info("Starting miner cron")
+        last_blk_time = block.get_latest_block().timestamp
+        cur_time = int(time.time())
+
+        if cur_time - last_blk_time > iamcoin.MINE_PERIOD:
+            log.info("More than {}s has passed, generating block".format(iamcoin.MINE_PERIOD))
+            await block.generate_next_block()
+        else:
+            log.info("Nothing to do")
+        await asyncio.sleep(iamcoin.MINE_PERIOD)
+
 app = web.Application(logger=log)
 app.add_routes([web.get('/blockcount', api_get_block_count),
                 web.post("/minerawblock", api_add_raw_block),
@@ -135,4 +148,5 @@ app.add_routes([web.get('/blockcount', api_get_block_count),
 loop = asyncio.get_event_loop()
 handler = app.make_handler()
 server = loop.create_server(handler, "0.0.0.0", iamcoin.PORT)
+loop.create_task(miner_cron())
 loop.run_until_complete(server)
