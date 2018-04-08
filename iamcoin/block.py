@@ -175,7 +175,7 @@ def add_block_to_blockchain(block):
         new_utxo = transaction.process_transactions(block.data, blockchain.utxo, block.index)
         if new_utxo:
             blockchain.utxo = new_utxo
-            transact_pool.update_transact_pool(blockchain.utxo)
+            transact_pool.update_transact_pool(new_utxo)
             blockchain.blockchain.append(block)
             log.info("Block was valid and added to chain")
             return True

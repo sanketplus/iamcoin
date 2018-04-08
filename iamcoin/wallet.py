@@ -8,7 +8,7 @@ from . import transaction
 from . import blockchain
 from . import transact_pool
 from . import p2p
-
+from . import block
 
 PK_LOCATION = None
 log = logging.getLogger(__name__)
@@ -195,6 +195,10 @@ async def send_transaction(data):
         tx = create_transaction(data["address"], data["amount"], get_pk_from_wallet(), blockchain.utxo, transact_pool.transact_pool)
         transact_pool.add_to_transact_pool(tx, blockchain.utxo)
         await p2p.broadcast_txpool()
+
+        if len(transact_pool.transact_pool)>=10:
+            log.info("More than 10 transaction in pool, mining block")
+            block.generate_next_block()
         return True
     except Exception:
         return False
