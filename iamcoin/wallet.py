@@ -6,6 +6,8 @@ import iamcoin
 
 from . import transaction
 from . import blockchain
+from . import transact_pool
+from . import p2p
 
 
 PK_LOCATION = None
@@ -74,7 +76,7 @@ def get_balance(address, utxos):
     :param utxos:
     :return:
     """
-    amt=0
+    amt = 0
     for t in utxos:
         if t.address == address:
             amt += t.amount
@@ -103,10 +105,10 @@ def find_txouts_for_amt(amount, my_utxos):
         cur_amt += t.amount
         if cur_amt > amount:
             left_amt = cur_amt - amount
-            return (included_txout, left_amt)
+            return(included_txout, left_amt)
 
     log.error("Not enough coins to send")
-    raise
+    raise Exception
 
 
 def create_txouts(recv_addr, my_addr, amount, left_amt):
@@ -129,7 +131,23 @@ def create_txouts(recv_addr, my_addr, amount, left_amt):
         return [txout1, leftover_tx]
 
 
-def create_transaction(recv_addr, amount, pk, utxos):
+def filter_txpool_txs(utxo, pool):
+    txins = []
+    for tx in pool:
+        txins.extend(tx.txins)
+
+    removable = []
+
+    for utx in utxo:
+        for tin in txins:
+            if tin.txout_index == utx.txout_index and tin.txout_id == utx.txout_id:
+                removable.append(utx)
+                break
+
+    return [t for t in utxo if t not in removable]
+
+
+def create_transaction(recv_addr, amount, pk, utxos, pool):
     """
 
     :param recv_addr:
@@ -141,7 +159,9 @@ def create_transaction(recv_addr, amount, pk, utxos):
 
     my_addr = transaction.get_public_key(pk)
 
-    my_utxos = [t for t in utxos if t.address == my_addr]
+    my_utxos_a = [t for t in utxos if t.address == my_addr]
+
+    my_utxos = filter_txpool_txs(my_utxos_a, pool)
 
     included_txout, left_amt = find_txouts_for_amt(amount, my_utxos)
 
@@ -151,12 +171,12 @@ def create_transaction(recv_addr, amount, pk, utxos):
     unsigned_txins = [to_tx_unsigned(t) for t in included_txout]
 
     # creating final transaction with TxIn as txout of my address and txout which we got from function call
-    tx = transaction.Transaction("",unsigned_txins, create_txouts(recv_addr, my_addr, amount, left_amt))
+    tx = transaction.Transaction("", unsigned_txins, create_txouts(recv_addr, my_addr, amount, left_amt))
 
-    #setting txid
+    # setting txid
     tx.id = transaction.get_transaction_id(tx)
 
-    #signing tx's txins
+    # signing tx's txins
     # tx.txins = [transaction.sign_tx(tx, index, pk, utxos) for index, t in enumerate(tx.txins)]
     singned_txins = []
     for index, t in enumerate(tx.txins):
@@ -167,3 +187,14 @@ def create_transaction(recv_addr, amount, pk, utxos):
     tx.txins = singned_txins
 
     return tx
+
+
+
+async def send_transaction(data):
+    try:
+        tx = create_transaction(data["address"], data["amount"], get_pk_from_wallet(), blockchain.utxo, transact_pool.transact_pool)
+        transact_pool.add_to_transact_pool(tx, blockchain.utxo)
+        await p2p.broadcast_txpool()
+        return True
+    except Exception:
+        return False

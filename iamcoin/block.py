@@ -4,6 +4,7 @@ from . import blockchain
 from . import transaction
 from . import wallet
 from . import p2p
+from . import transact_pool
 
 import logging
 import json
@@ -97,7 +98,7 @@ async def generate_raw_next_block(data):
     next_timestamp = int(time.time())
     # txs = [transaction.Transaction.from_json(_) for _ in data]
     txs = data
-    txs_str = ''.join(str(t) for t in data)
+    txs_str = ''.join([str(t) for t in txs])
     next_hash = calculate_hash(next_index, latest_block.hash, next_timestamp, txs_str)
 
     new_blk = Block(next_index, next_hash, latest_block.hash, next_timestamp, txs)
@@ -116,7 +117,7 @@ async def generate_next_block():
     :return:
     """
     coinbase_tx = transaction.get_coinbse_tx(wallet.get_pubkey_from_wallet(), get_latest_block().index+1)
-    data = [coinbase_tx]
+    data = [coinbase_tx] + transact_pool.get_transact_pool()
     return await generate_raw_next_block(data)
 
 
@@ -128,7 +129,7 @@ async def generate_next_block_with_tx(recv_addr, amount):
     :return:
     """
     coinbase_tx = transaction.get_coinbse_tx(wallet.get_pubkey_from_wallet(), get_latest_block().index+1)
-    tx = wallet.create_transaction(recv_addr, amount, wallet.get_pk_from_wallet(), blockchain.utxo)
+    tx = wallet.create_transaction(recv_addr, amount, wallet.get_pk_from_wallet(), blockchain.utxo, transact_pool.get_transact_pool())
     data = [coinbase_tx, tx]
     return await generate_raw_next_block(data)
 
@@ -174,6 +175,7 @@ def add_block_to_blockchain(block):
         new_utxo = transaction.process_transactions(block.data, blockchain.utxo, block.index)
         if new_utxo:
             blockchain.utxo = new_utxo
+            transact_pool.update_transact_pool(blockchain.utxo)
             blockchain.blockchain.append(block)
             log.info("Block was valid and added to chain")
             return True

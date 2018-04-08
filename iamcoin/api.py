@@ -9,6 +9,7 @@ from .p2p import peers, handle_peer_msg, broadcast_latest
 from . import wallet
 from . import transaction
 from . import block
+from . import transact_pool
 
 log = logging.getLogger(__name__)
 
@@ -59,6 +60,15 @@ async def api_mine_transaction(request):
     return web.json_response({"response":resp})
 
 
+async def api_send_transaction(request):
+    data = await request.json()
+    res = await wallet.send_transaction(data)
+    if res:
+        return web.json_response({"response":"Success!"})
+    else:
+        return web.json_response({"response":"Error!"})
+
+
 async def api_balance(request):
     balance = wallet.get_account_balance()
     return web.json_response({"address": wallet.get_pubkey_from_wallet(),
@@ -93,6 +103,11 @@ async def add_peer(peer_addr):
     log.info("Removed peer {}".format(peer_addr))
 
 
+async def api_get_txpool(request):
+    pool = transact_pool.get_transact_pool()
+    return web.json_response([t.to_json() for t in pool])
+
+
 async def wshandle(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -109,9 +124,11 @@ app.add_routes([web.get('/blockcount', api_get_block_count),
                 web.post("/minerawblock", api_add_raw_block),
                 web.post("/mineblock", api_add_block),
                 web.post("/minetransaction", api_mine_transaction),
+                web.post("/sendtransaction", api_send_transaction),
                 web.get("/balance", api_balance),
                 web.post("/addpeer", api_add_peer),
                 web.get("/peers", api_get_peers),
+                web.get("/txpool", api_get_txpool),
                 web.get('/ws', wshandle)])
 
 

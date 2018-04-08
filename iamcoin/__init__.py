@@ -7,6 +7,7 @@ from . import blockchain
 from . import p2p
 from . import transaction
 from . import wallet
+from . import transact_pool
 
 LOG_DIR = "/var/log/iamcoin.log" if  len(sys.argv) == 1 else "/var/log/iamcoin-replica.log"
 PORT = 5000 if len(sys.argv) == 1 else sys.argv[1]

@@ -3,6 +3,7 @@ import logging
 import ecdsa
 import binascii
 
+from . import wallet
 
 log = logging.getLogger(__name__)
 COINBASE_AMT = 100
@@ -265,4 +266,3 @@ def get_public_key(pk):
 
     pub_key = ecdsa.SigningKey.from_pem(pk).get_verifying_key().to_string().hex()
     return pub_key
-
