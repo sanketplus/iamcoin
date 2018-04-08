@@ -4,6 +4,11 @@ The coin wanted to call itself `iamcoin` :D
 
 Core component used here is `aiohttp` which provides HTTP api and WebSocket P2P connectivity. A block is mined every 10 minutes or when there are 10 transaction in pool (configurable). Reward for mining block is 100 coins.
 
+#### Start Node
+```bash
+python3 run.py
+```
+
 ## HTTP API
 
 **Add peer**
@@ -38,5 +43,5 @@ curl localhost:5000/sendtransaction --data '{"address":"8007305ba6672e4ce558d750
 
 **mine block which will include all tx from pool**
 ```bash
-
+curl localhost:5000/mineblock -X POST
 ```
