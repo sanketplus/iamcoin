@@ -1,5 +1,11 @@
 # IAMCOIN :D
 
+The coin wanted to call itself `iamcoin` :D
+
+Core component used here is `aiohttp` which provides HTTP api and WebSocket P2P connectivity. A block is mined every 10 minutes or when there are 10 transaction in pool (configurable). Reward for mining block is 100 coins.
+
+## HTTP API
+
 **Add peer**
 ```bash
 curl localhost:5000/addpeer -X POST --data "peer=http://example.com:5000/ws"
@@ -15,7 +21,22 @@ curl localhost:5000/blockcount
 curl localhost:5000/peers 
 ```
 
-**Mine first block with coinbase transaction**
+**List Transactions in Transaction pool**
 ```bash
-curl -H "Content-type:application/json" http://localhost:5000/mineblock --data '{"data":[{"txins":[{"signature":"","txout_id":"","txout_index":1}],"txouts":[{"address":"04bfcab8722991ae774db48f934ca79cfb7dd991229153b9f732ba5334aafcd8e7266e47076996b55a14bf9913ee3145ce0cfc1372ada8ada74bd287450313534a","amount":100}],"id":"e957edadfe2e987843650a4ee98fa721c97e29148cdccc28bda7f33c26c3dd09"}]}'
+curl localhost:5000/txpool
+```
+
+**Get Balance**
+```bash
+curl localhost:5000/balance 
+```
+
+**Send transaction in Transaction pool*
+```bash
+curl localhost:5000/sendtransaction --data '{"address":"8007305ba6672e4ce558d7502c904bce9b3a8263f2a66e3a79d6877b2c52c8a848601a43bd3f884b1b209cd3ca124daa","amount":30}' 
+```
+
+**mine block which will include all tx from pool**
+```bash
+
 ```
